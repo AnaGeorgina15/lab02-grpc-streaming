@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package video;
+
+service VideoService {
+  // Subir un video (client streaming)
+  rpc UploadVideo(stream UploadChunk) returns (UploadStatus) {}
+
+  // Listar videos disponibles
+  rpc ListVideos(Empty) returns (VideoList) {}
+
+  // Reproducir video por streaming de frames
+  rpc StreamVideo(VideoRequest) returns (stream VideoFrame) {}
+}
+
+message Empty {}
+
+message UploadChunk {
+  oneof payload {
+    VideoMetadata metadata = 1; // Primer mensaje con metadatos
+    bytes data = 2;             // Mensajes siguientes con datos binarios
+  }
+}
+
+// Metadatos del video que se sube
+message VideoMetadata {
+  string filename = 1;   // nombre del archivo "demo.mp4"
+  string title = 2;      // título descriptivo
+}
+
+// Respuesta al terminar el upload
+message UploadStatus {
+  bool success = 1;
+  string message = 2;
+  string stored_filename = 3; // ruta/archivo real en el servidor
+}
+
+// Petición para reproducir video
+message VideoRequest {
+  string filename = 1; // nombre del archivo guardado en el servidor
+}
+
+// Lista de videos
+message VideoInfo {
+  string filename = 1;
+  string title = 2;
+}
+
+message VideoList {
+  repeated VideoInfo videos = 1;
+}
+
+//Frame de video para reproducir
+message VideoFrame {
+  bytes jpeg_data = 1;   
+  int32 frame_number = 2;
+  string filename = 3;  
+}
+
+
+//python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. video_service.proto
